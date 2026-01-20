@@ -52,7 +52,7 @@ A full-stack job portal built with **MongoDB, Express.js, React, and Node.js** f
 
 ### 1. Clone the Repository
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Dnyanesh182/job-portal-mern.git
 cd project
 ```
 
