@@ -1,27 +1,32 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { LogIn } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { LogIn, Loader2 } from 'lucide-react';
 import { useStore } from '../store';
-import { dummyUsers } from '../data';
+import { authAPI } from '../services/api';
 
 function Login() {
   const navigate = useNavigate();
   const isDarkMode = useStore((state) => state.isDarkMode);
-  const setCurrentUser = useStore((state) => state.setCurrentUser);
-  
+  const login = useStore((state) => state.login);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const user = dummyUsers.find(u => u.email === email);
-    
-    if (user) {
-      setCurrentUser(user);
-      navigate(`/${user.role}/dashboard`);
-    } else {
-      setError('Invalid credentials');
+    setError('');
+    setLoading(true);
+
+    try {
+      const data = await authAPI.login({ email, password });
+      login(data.user, data.token);
+      navigate(`/${data.user.role}/dashboard`);
+    } catch (err: any) {
+      setError(err.message || 'Invalid credentials');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -31,9 +36,11 @@ function Login() {
         <div className="flex items-center justify-center mb-8">
           <LogIn className="w-12 h-12 text-blue-600" />
         </div>
-        
-        <h1 className="text-2xl font-bold text-center mb-8">Welcome Back</h1>
-        
+
+        <h1 className={`text-2xl font-bold text-center mb-8 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          Welcome Back
+        </h1>
+
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error}
@@ -42,34 +49,55 @@ function Login() {
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">Email</label>
+            <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+              Email
+            </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className={`w-full p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} border focus:ring-2 focus:ring-blue-500`}
+              className={`w-full p-3 rounded-lg ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-50 text-gray-900'} border focus:ring-2 focus:ring-blue-500`}
               required
+              disabled={loading}
             />
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">Password</label>
+            <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+              Password
+            </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className={`w-full p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} border focus:ring-2 focus:ring-blue-500`}
+              className={`w-full p-3 rounded-lg ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-50 text-gray-900'} border focus:ring-2 focus:ring-blue-500`}
               required
+              disabled={loading}
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
-            Sign In
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Signing in...
+              </>
+            ) : (
+              'Sign In'
+            )}
           </button>
         </form>
+
+        <p className={`mt-6 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          Don't have an account?{' '}
+          <Link to="/register" className="text-blue-600 hover:underline">
+            Register here
+          </Link>
+        </p>
       </div>
     </div>
   );
