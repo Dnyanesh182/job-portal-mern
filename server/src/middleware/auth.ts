@@ -64,9 +64,12 @@ export const requireJobSeeker = (req: AuthRequest, res: Response, next: NextFunc
 
 // Generate JWT token
 export const generateToken = (id: string, role: string): string => {
+    const secret = process.env.JWT_SECRET || 'secret';
+    const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+
     return jwt.sign(
         { id, role },
-        process.env.JWT_SECRET || 'secret',
-        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+        secret,
+        { expiresIn } as jwt.SignOptions
     );
 };
